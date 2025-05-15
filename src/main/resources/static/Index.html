@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Felhasználókezelő</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, select, button { margin: 5px; }
+    </style>
+</head>
+<body>
+<h1>Felhasználók</h1>
+<button onclick="loadUsers()">Frissítés</button>
+<ul id="userList"></ul>
+
+<h2>Új felhasználó létrehozása</h2>
+<form id="userForm" onsubmit="createUser(); return false;">
+    <input type="text" id="name" placeholder="Név" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <select id="roleSelect" required>
+        <option value="" disabled selected>Szerep kiválasztása</option>
+    </select>
+    <button type="submit">Létrehozás</button>
+</form>
+
+<script>
+    // Betölti a szerepköröket a select-be
+    function loadRoles() {
+        fetch('/roles')
+            .then(res => {
+                if (!res.ok) throw new Error('Hiba a szerepkörök betöltésekor');
+                return res.json();
+            })
+            .then(roles => {
+                const select = document.getElementById('roleSelect');
+                roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role.id;
+                    option.textContent = role.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            });
+    }
+
+    // Betölti a felhasználókat és listázza
+    function loadUsers() {
+        fetch('/users')
+            .then(res => {
+                if (!res.ok) throw new Error('Hiba a felhasználók betöltésekor');
+                return res.json();
+            })
+            .then(users => {
+                const list = document.getElementById('userList');
+                list.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.textContent = `${user.name} (${user.email}) - ID: ${user.id}`;
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = 'Törlés';
+                    delBtn.onclick = () => deleteUser(user.id);
+                    li.appendChild(delBtn);
+                    list.appendChild(li);
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            });
+    }
+
+    // Új felhasználó létrehozása
+    function createUser() {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const roleId = document.getElementById('roleSelect').value;
+
+        if (!roleId) {
+            alert('Kérlek válassz szerepkört!');
+            return;
+        }
+
+        const user = {
+            name,
+            email,
+            roles: [{ id: Number(roleId) }]
+        };
+
+        fetch('/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Hiba a felhasználó létrehozásakor');
+            return response.json();
+        })
+        .then(() => {
+            loadUsers();
+            // Űrlap törlése
+            document.getElementById('userForm').reset();
+        })
+        .catch(err => alert(err.message));
+    }
+
+    // Felhasználó törlése
+    function deleteUser(id) {
+        fetch(`/users/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Hiba a törlés során');
+                loadUsers();
+            })
+            .catch(err => alert(err.message));
+    }
+
+    // Betöltéskor először a szerepkörök, aztán a felhasználók
+    window.onload = () => {
+        loadRoles();
+        loadUsers();
+    };
+</script>
+</body>
+</html>
