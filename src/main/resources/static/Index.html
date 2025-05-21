@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Felhasználókezelő</title>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-        input, select, button { margin: 5px; }
-    </style>
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
 <h1>Felhasználók</h1>
@@ -57,7 +54,8 @@
                 list.innerHTML = '';
                 users.forEach(user => {
                     const li = document.createElement('li');
-                    li.textContent = `${user.name} (${user.email}) - ID: ${user.id}`;
+                    const roleNames = user.roles.map(role => role.name).join(', ');
+                    li.textContent = `${user.name} (${user.email}) - ID: ${user.id} - Role: ${roleNames}`;
                     const delBtn = document.createElement('button');
                     delBtn.textContent = 'Törlés';
                     delBtn.onclick = () => deleteUser(user.id);
